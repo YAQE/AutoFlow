@@ -6,7 +6,8 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     DATABASE_URL: str
     STATUS : str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
 
-    model_config = SettingsConfigDict(env_file="backend/.env")
+    model_config = SettingsConfigDict(env_file=".env")
 
 settings = Settings()
