@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:17
+    container_name: autoflow_postgres
+
+    environment:
+      POSTGRES_USER: autoflow
+      POSTGRES_PASSWORD: autoflow123
+      POSTGRES_DB: autoflow_db
+
+    ports:
+      - "5432:5432"
+
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+
+volumes:
+  postgres_data:
+    
