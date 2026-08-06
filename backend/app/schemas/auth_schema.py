@@ -25,3 +25,14 @@ class RegisterResponse(BaseModel):
     model_config = {
         "from_attributes": True
     }
+
+class UserResponse(BaseModel):
+    uuid: str
+    username: str
+    email: EmailStr
+    full_name: str
+    last_login: datetime | None
+
+    model_config = {
+        "from_attributes": True
+    }
