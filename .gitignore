@@ -1,15 +1,22 @@
+# Python
+.venv/
 __pycache__/
 *.pyc
 
-.venv/
-venv/
-
+# Environment
 .env
 
+# IDE
 .vscode/
+.idea/
 
-node_modules/
+# OS
+.DS_Store
+Thumbs.db
 
-dist/
+# Pytest
+.pytest_cache/
 
-build/
+# SQLAlchemy
+*.db
+*.sqlite3
