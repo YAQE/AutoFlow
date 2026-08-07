@@ -18,11 +18,11 @@ class Workflow(Base):
 
     prompt = Column(Text, nullable=False)
 
-    status = Column(Enum("active", "inactive"), nullable=False, default="active")
+    status = Column(Enum("active", "inactive", name="workflow_status"), nullable=False, default="active")
 
-    created_at = Column(DateTime, nullable=False, default=datetime.now())
+    created_at = Column(DateTime, nullable=False, default=datetime.now)
 
-    updated_at = Column(DateTime, nullable=False, default=datetime.now())
+    updated_at = Column(DateTime, nullable=False, default=datetime.now)
 
     owner_id = Column(
         Integer,
