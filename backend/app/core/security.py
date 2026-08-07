@@ -1,16 +1,19 @@
-from passlib.context import CryptContext
-from jose import jwt
 from datetime import datetime, timedelta, UTC
+
+from jose import jwt
+from pwdlib import PasswordHash
 
 from app.core.config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+password_hash = PasswordHash.recommended()
+
 
 def create_access_token(data: dict):
-
     to_encode = data.copy()
 
-    expire = datetime.now(UTC) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(UTC) + timedelta(
+        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+    )
 
     to_encode.update(
         {
@@ -24,9 +27,10 @@ def create_access_token(data: dict):
         algorithm="HS256",
     )
 
+
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    return password_hash.hash(password)
 
 
 def verify_password(password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(password, hashed_password)
+    return password_hash.verify(password, hashed_password)

@@ -1,5 +1,4 @@
 from sqlalchemy.orm import Session
-
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from datetime import datetime, UTC
@@ -9,7 +8,11 @@ from fastapi import HTTPException
 from app.models.user import User
 from app.schemas.auth_schema import RegisterRequest
 from app.core.security import hash_password
-
+from app.core.exceptions import (
+    UserAlreadyExistsException,
+    InvalidCredentialsException,
+    UserNotFoundException,
+)
 
 class AuthService:
 
@@ -21,16 +24,12 @@ class AuthService:
             .first()
         )
         if user is None:
-            raise HTTPException(
-                status_code=401,
-                detail="Invalid username or password"
-            )
+            raise InvalidCredentialsException()
         
         if not verify_password(password, user.password_hash):
-            raise HTTPException(
-                status_code=401,
-                detail="Invalid username or password",
-            )
+            raise InvalidCredentialsException()
+
+        
         access_token = create_access_token(
             {
                 "sub": user.uuid,
@@ -56,14 +55,10 @@ class AuthService:
 
 
         if existing_email:
-            raise HTTPException(
-        status_code=409,
-        detail="Email already exists")
+            raise UserAlreadyExistsException()
 
         if existing_username:
-            raise HTTPException(
-        status_code=409,
-        detail="Username already exists")
+            raise UserAlreadyExistsException()
 
         user = User(
             username=request.username,

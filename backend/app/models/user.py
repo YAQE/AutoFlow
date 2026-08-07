@@ -6,6 +6,7 @@ from app.database.database import Base
 
 from sqlalchemy import Boolean, DateTime, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import relationship
 
 class User(Base):
     __tablename__ = "users"
@@ -22,3 +23,5 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     last_login: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+
+    workflows = relationship("Workflow", back_populates="owner", cascade="all, delete-orphan",)

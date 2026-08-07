@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 
+# pyrefly: ignore [missing-import]
 from sqlalchemy.orm import Session
 
 from app.schemas.auth_schema import UserResponse
