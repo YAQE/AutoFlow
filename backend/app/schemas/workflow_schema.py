@@ -8,6 +8,12 @@ class WorkflowCreate(BaseModel):
     description: str | None = None
     prompt: str
 
+class WorkflowUpdate(BaseModel):
+    title: str
+    description: str | None = None
+    prompt: str
+    status: str
+
 
 class WorkflowResponse(BaseModel):
     id: int

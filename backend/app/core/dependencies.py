@@ -7,13 +7,22 @@ from app.core.config import settings
 from app.database.database import get_db
 from app.models.user import User
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl="/auth/login"
+)
 
 
 def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db),
-):
+) -> User:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
     try:
         payload = jwt.decode(
             token,
@@ -21,26 +30,25 @@ def get_current_user(
             algorithms=["HS256"],
         )
 
-        uuid = payload.get("sub")
+        user_uuid = payload.get("sub")
 
-        if uuid is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token",
-            )
+        if not user_uuid:
+            raise credentials_exception
 
     except JWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token",
-        )
+        raise credentials_exception
 
-    user = db.query(User).filter(User.uuid == uuid).first()
+    user = (
+        db.query(User)
+        .filter(
+            User.uuid == user_uuid,
+            User.is_active == True,
+            User.is_deleted == False,
+        )
+        .first()
+    )
 
     if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found",
-        )
+        raise credentials_exception
 
     return user
