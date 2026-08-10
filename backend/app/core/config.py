@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     STATUS: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
+    AI_PROVIDER: str
+    OLLAMA_BASE_URL: str
+    OLLAMA_MODEL: str
 
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env"
