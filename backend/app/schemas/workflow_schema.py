@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from pydantic import BaseModel
-
+from typing import Literal
 
 class WorkflowCreate(BaseModel):
     title: str
@@ -12,7 +12,7 @@ class WorkflowUpdate(BaseModel):
     title: str
     description: str | None = None
     prompt: str
-    status: str
+    status: Literal["active", "inactive"]
 
 
 class WorkflowResponse(BaseModel):

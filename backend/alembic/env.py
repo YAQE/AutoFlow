@@ -6,7 +6,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from app.database.database import Base
 from app.models.user import User
 from app.models.workflow import Workflow
+from app.models.workflow_run import WorkflowRun
 from logging.config import fileConfig
+
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool

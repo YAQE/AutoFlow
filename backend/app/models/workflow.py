@@ -24,13 +24,8 @@ class Workflow(Base):
 
     updated_at = Column(DateTime, nullable=False, default=datetime.now)
 
-    owner_id = Column(
-        Integer,
-        ForeignKey("users.id"),
-        nullable=False,
-    )
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False,)
 
-    owner = relationship(
-        "User",
-        back_populates="workflows",
-    )
+    owner = relationship("User", back_populates="workflows",)
+
+    runs = relationship("WorkflowRun", back_populates="workflow", cascade="all, delete-orphan",)

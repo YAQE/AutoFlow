@@ -25,3 +25,5 @@ class User(Base):
     last_login: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
     workflows = relationship("Workflow", back_populates="owner", cascade="all, delete-orphan",)
+
+    workflow_runs = relationship("WorkflowRun", back_populates="user",)
