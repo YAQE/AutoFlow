@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 # pyrefly: ignore [missing-import]
 from sqlalchemy.orm import Session
 
@@ -6,10 +6,13 @@ from app.database.database import get_db
 from app.schemas.workflow_schema import (
     WorkflowCreate,
     WorkflowResponse,
+    WorkflowRunRequest,
+    WorkflowRunResponse,
     WorkflowUpdate,
 )
 from app.schemas.auth_schema import UserResponse
 from app.services.workflow_service import WorkflowService
+from app.services.workflow_run_service import WorkflowRunService
 from app.core.dependencies import get_current_user
 from app.models.user import User
 
@@ -25,6 +28,69 @@ def get_workflows(
         current_user=current_user,
         db=db,
     )
+
+@router.post(
+    "/{workflow_id}/run",
+    response_model=WorkflowRunResponse,
+    summary="Run a workflow",
+)
+async def run_workflow(
+    workflow_id: int,
+    request: WorkflowRunRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        workflow_run = await WorkflowRunService.run_workflow(
+            workflow_id=workflow_id,
+            request=request,
+            current_user=current_user,
+            db=db,
+        )
+
+    except RuntimeError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI provider is unavailable",
+        )
+
+    if workflow_run is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Workflow not found",
+        )
+
+    return workflow_run
+
+@router.get(
+    "/{workflow_id}/runs",
+    response_model=list[WorkflowRunResponse],
+    summary="List workflow run history",
+)
+def get_workflow_runs(
+    workflow_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    limit: int = Query(
+        default=20,
+        ge=1,
+        le=100,
+    ),
+):
+    workflow_runs = WorkflowRunService.get_workflow_runs(
+        workflow_id=workflow_id,
+        current_user=current_user,
+        db=db,
+        limit=limit,
+    )
+
+    if workflow_runs is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Workflow not found",
+        )
+
+    return workflow_runs
 
 @router.get(
     "/{workflow_id}",
@@ -51,6 +117,9 @@ def get_workflow(
         )
 
     return workflow
+
+
+
 
 @router.put(
     "/{workflow_id}",
