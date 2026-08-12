@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 
 import LoginPage from "./pages/LoginPage";
+import Dashboard from "./pages/Dashboard";
+
 import { getCurrentUser } from "./api/client";
-import { getToken } from "./auth/token";
+import { getToken, removeToken } from "./auth/token";
 
 type User = {
     uuid: string;
@@ -27,9 +29,10 @@ function App() {
 
             try {
                 const currentUser = await getCurrentUser();
+
                 setUser(currentUser);
             } catch {
-                localStorage.removeItem("autoflow_access_token");
+                removeToken();
                 setUser(null);
             } finally {
                 setLoading(false);
@@ -40,32 +43,30 @@ function App() {
     }, []);
 
     if (loading) {
-        return <div>Loading...</div>;
+        return (
+            <main className="auth-page">
+                <div className="loading-state">
+                    Loading...
+                </div>
+            </main>
+        );
     }
 
     if (!user) {
-        return <LoginPage onLogin={setUser} />;
+        return (
+            <LoginPage
+                onLogin={setUser}
+            />
+        );
     }
 
     return (
-        <div>
-            <h1>Welcome to AutoFlow</h1>
-    
-            <p>Welcome, {user.full_name}</p>
-    
-            <p>Username: {user.username}</p>
-    
-            <p>Email: {user.email}</p>
-    
-            <button
-                onClick={() => {
-                    localStorage.removeItem("autoflow_access_token");
-                    setUser(null);
-                }}
-            >
-                Logout
-            </button>
-        </div>
+        <Dashboard
+            onLogout={() => {
+                removeToken();
+                setUser(null);
+            }}
+        />
     );
 }
 

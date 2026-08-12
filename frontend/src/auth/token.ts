@@ -7,7 +7,7 @@ export function setToken(token: string) {
 export function getToken(): string | null {
     return localStorage.getItem(TOKEN_KEY);
 }
-3
+
 export function removeToken() {
     localStorage.removeItem(TOKEN_KEY);
 }

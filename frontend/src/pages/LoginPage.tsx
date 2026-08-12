@@ -1,11 +1,11 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 
-import { login, getCurrentUser } from "../api/client";
+import {
+    getCurrentUser,
+    login,
+} from "../api/client";
+
 import { setToken } from "../auth/token";
-
-type LoginPageProps = {
-    onLogin: (user: User) => void;
-};
 
 type User = {
     uuid: string;
@@ -15,11 +15,21 @@ type User = {
     last_login: string | null;
 };
 
-function LoginPage({ onLogin }: LoginPageProps) {
+type LoginPageProps = {
+    onLogin: (user: User) => void;
+};
+
+function LoginPage({
+    onLogin,
+}: LoginPageProps) {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
-    const [error, setError] = useState<string | null>(null);
-    const [loading, setLoading] = useState(false);
+
+    const [error, setError] =
+        useState<string | null>(null);
+
+    const [loading, setLoading] =
+        useState(false);
 
     async function handleSubmit(
         event: React.FormEvent<HTMLFormElement>,
@@ -30,11 +40,15 @@ function LoginPage({ onLogin }: LoginPageProps) {
         setLoading(true);
 
         try {
-            const data = await login(username, password);
+            const data = await login(
+                username,
+                password,
+            );
 
             setToken(data.access_token);
 
-            const user = await getCurrentUser();
+            const user =
+                await getCurrentUser();
 
             onLogin(user);
         } catch (error) {
@@ -49,47 +63,99 @@ function LoginPage({ onLogin }: LoginPageProps) {
     }
 
     return (
-        <div>
-            <h1>AutoFlow Login</h1>
+        <main className="auth-page">
+            <div className="auth-card">
 
-            <form onSubmit={handleSubmit}>
-                <div>
-                    <label htmlFor="username">
-                        Username
-                    </label>
+                <div className="brand">
+                    <div className="brand-mark">
+                        A
+                    </div>
 
-                    <input
-                        id="username"
-                        type="text"
-                        value={username}
-                        onChange={(event) =>
-                            setUsername(event.target.value)
-                        }
-                    />
+                    <div>
+                        <h1>
+                            AutoFlow
+                        </h1>
+
+                        <p>
+                            AI-powered workflows
+                        </p>
+                    </div>
                 </div>
 
-                <div>
-                    <label htmlFor="password">
-                        Password
-                    </label>
+                <div className="auth-heading">
+                    <h2>
+                        Welcome back
+                    </h2>
 
-                    <input
-                        id="password"
-                        type="password"
-                        value={password}
-                        onChange={(event) =>
-                            setPassword(event.target.value)
-                        }
-                    />
+                    <p>
+                        Sign in to continue
+                        to your workflows.
+                    </p>
                 </div>
 
-                <button type="submit" disabled={loading}>
-                    {loading ? "Logging in..." : "Login"}
-                </button>
-            </form>
+                <form
+                    onSubmit={handleSubmit}
+                >
+                    <div className="form-group">
+                        <label
+                            htmlFor="username"
+                        >
+                            Username
+                        </label>
 
-            {error && <p>{error}</p>}
-        </div>
+                        <input
+                            id="username"
+                            type="text"
+                            value={username}
+                            onChange={(event) =>
+                                setUsername(
+                                    event.target.value,
+                                )
+                            }
+                            placeholder="Enter your username"
+                            required
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label
+                            htmlFor="password"
+                        >
+                            Password
+                        </label>
+
+                        <input
+                            id="password"
+                            type="password"
+                            value={password}
+                            onChange={(event) =>
+                                setPassword(
+                                    event.target.value,
+                                )
+                            }
+                            placeholder="Enter your password"
+                            required
+                        />
+                    </div>
+
+                    {error && (
+                        <div className="error-message">
+                            {error}
+                        </div>
+                    )}
+
+                    <button
+                        className="primary-button full-width"
+                        type="submit"
+                        disabled={loading}
+                    >
+                        {loading
+                            ? "Signing in..."
+                            : "Sign in"}
+                    </button>
+                </form>
+            </div>
+        </main>
     );
 }
 
