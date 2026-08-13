@@ -8,6 +8,7 @@ from app.models.user import User
 from app.models.workflow import Workflow
 from app.models.workflow_run import WorkflowRun
 from logging.config import fileConfig
+from app.models.automation import Automation
 
 
 from sqlalchemy import engine_from_config

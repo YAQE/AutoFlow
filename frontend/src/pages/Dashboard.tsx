@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { getWorkflows } from "../api/client";
 import type { Workflow } from "../types/workflow";
@@ -45,7 +46,7 @@ function Dashboard({
         return (
             <main className="dashboard-page">
                 <div className="loading-state">
-                    Loading workflows...
+                    Loading...
                 </div>
             </main>
         );
@@ -55,15 +56,35 @@ function Dashboard({
         <main className="dashboard-page">
             <div className="dashboard-container">
 
-                {/* HEADER */}
-                <header className="dashboard-header">
-                    <div>
-                        <h1>AutoFlow</h1>
+                {/* NAVIGATION */}
+                <nav className="app-nav">
 
-                        <p>
-                            Build and run your
-                            AI workflows.
-                        </p>
+                    <div className="app-brand">
+                        <div className="brand-mark">
+                            A
+                        </div>
+
+                        <span>
+                            AutoFlow
+                        </span>
+                    </div>
+
+                    <div className="app-nav-links">
+
+                        <Link
+                            to="/"
+                            className="nav-link active"
+                        >
+                            AI Assistant
+                        </Link>
+
+                        <Link
+                            to="/automations"
+                            className="nav-link"
+                        >
+                            Automations
+                        </Link>
+
                     </div>
 
                     <button
@@ -72,6 +93,26 @@ function Dashboard({
                     >
                         Logout
                     </button>
+
+                </nav>
+
+
+                {/* PAGE HEADER */}
+                <header className="dashboard-header">
+                    <div>
+                        <p className="eyebrow">
+                            AI WORKSPACE
+                        </p>
+
+                        <h1>
+                            Welcome back
+                        </h1>
+
+                        <p>
+                            Build, explore and manage
+                            your AI-powered workflows.
+                        </p>
+                    </div>
                 </header>
 
 
@@ -93,6 +134,7 @@ function Dashboard({
 
                 {/* WORKFLOWS */}
                 <section>
+
                     <div className="section-heading">
 
                         <div>
@@ -101,8 +143,8 @@ function Dashboard({
                             </h2>
 
                             <p>
-                                Manage your
-                                AI-powered workflows.
+                                Your existing
+                                automation workflows.
                             </p>
                         </div>
 
@@ -113,9 +155,13 @@ function Dashboard({
                     </div>
 
 
-                    {/* EMPTY STATE */}
                     {workflows.length === 0 ? (
+
                         <div className="empty-state">
+
+                            <div className="empty-state-icon">
+                                +
+                            </div>
 
                             <h3>
                                 No workflows yet
@@ -127,13 +173,14 @@ function Dashboard({
                             </p>
 
                         </div>
+
                     ) : (
 
-                        /* WORKFLOW CARDS */
                         <div className="workflow-grid">
 
                             {workflows.map(
                                 (workflow) => (
+
                                     <div
                                         className="workflow-card"
                                         key={workflow.id}
@@ -141,11 +188,21 @@ function Dashboard({
 
                                         <div className="workflow-card-header">
 
-                                            <h3>
-                                                {
-                                                    workflow.title
-                                                }
-                                            </h3>
+                                            <div>
+                                                <h3>
+                                                    {
+                                                        workflow.title
+                                                    }
+                                                </h3>
+
+                                                {workflow.description && (
+                                                    <p>
+                                                        {
+                                                            workflow.description
+                                                        }
+                                                    </p>
+                                                )}
+                                            </div>
 
                                             <span
                                                 className={`status-badge ${workflow.status}`}
@@ -156,15 +213,6 @@ function Dashboard({
                                             </span>
 
                                         </div>
-
-
-                                        {workflow.description && (
-                                            <p>
-                                                {
-                                                    workflow.description
-                                                }
-                                            </p>
-                                        )}
 
                                     </div>
                                 ),

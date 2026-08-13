@@ -27,3 +27,6 @@ class User(Base):
     workflows = relationship("Workflow", back_populates="owner", cascade="all, delete-orphan",)
 
     workflow_runs = relationship("WorkflowRun", back_populates="user",)
+
+
+    automations = relationship("Automation", back_populates="owner", cascade="all, delete-orphan",)

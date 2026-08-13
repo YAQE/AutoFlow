@@ -6,7 +6,7 @@ from typing import Literal
 class WorkflowCreate(BaseModel):
     title: str
     description: str | None = None
-    prompt: str
+    prompt: str | None = None
 
 class WorkflowUpdate(BaseModel):
     title: str
@@ -19,7 +19,7 @@ class WorkflowResponse(BaseModel):
     id: int
     title: str
     description: str | None
-    prompt: str
+    prompt: str | None
     status: str
     created_at: datetime
     updated_at: datetime

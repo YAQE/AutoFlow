@@ -1,7 +1,16 @@
 import { useEffect, useState } from "react";
 
+import {
+    BrowserRouter,
+    Navigate,
+    Route,
+    Routes,
+} from "react-router-dom";
+
 import LoginPage from "./pages/LoginPage";
 import Dashboard from "./pages/Dashboard";
+import AutomationsPage from "./pages/AutomationsPage";
+import AssistantPage from "./pages/AssistantPage";
 
 import { getCurrentUser } from "./api/client";
 import { getToken, removeToken } from "./auth/token";
@@ -42,6 +51,11 @@ function App() {
         checkAuth();
     }, []);
 
+    function handleLogout() {
+        removeToken();
+        setUser(null);
+    }
+
     if (loading) {
         return (
             <main className="auth-page">
@@ -61,12 +75,55 @@ function App() {
     }
 
     return (
-        <Dashboard
-            onLogout={() => {
-                removeToken();
-                setUser(null);
-            }}
-        />
+        <BrowserRouter>
+            <Routes>
+
+                {/* Ana sayfa */}
+                <Route
+                    path="/"
+                    element={
+                        <Dashboard
+                            onLogout={handleLogout}
+                        />
+                    }
+                />
+
+                {/* AI Assistant */}
+                <Route
+                    path="/assistant"
+                    element={
+                        <AssistantPage />
+                    }
+                />
+
+                {/* Automations */}
+                <Route
+                    path="/automations"
+                    element={
+                        <AutomationsPage
+                            onOpenAutomation={(automationId) => {
+                                console.log(
+                                    "Open automation:",
+                                    automationId,
+                                );
+                            }}
+                        />
+                    }
+                />
+
+                {/* Bilinmeyen route */}
+                <Route
+                    path="*"
+                    element={
+                        <Navigate
+                            to="/assistant"
+                            replace
+                        />
+                    }
+                />
+
+            </Routes>
+        </BrowserRouter>
     );
 }
 

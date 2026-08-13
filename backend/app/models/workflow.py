@@ -16,7 +16,7 @@ class Workflow(Base):
 
     description = Column(Text, nullable=True)
 
-    prompt = Column(Text, nullable=False)
+    prompt = Column(Text, nullable=True)
 
     status = Column(Enum("active", "inactive", name="workflow_status"), nullable=False, default="active")
 

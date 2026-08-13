@@ -4,9 +4,10 @@ import type {
     Workflow,
     WorkflowCreate,
     WorkflowUpdate,
-    WorkflowRunRequest,
-    WorkflowRunResponse,
 } from "../types/workflow";
+
+import type { Automation } from "../types/automation";
+import type { AssistantMessageResponse } from "../types/assistant";
 
 
 
@@ -197,4 +198,61 @@ export async function deleteWorkflow(
             `Failed to delete workflow: ${response.status}`,
         );
     }
+}
+
+export async function getAutomations(): Promise<Automation[]> {
+    const token = getToken();
+
+    if (!token) {
+        throw new Error("Not authenticated");
+    }
+
+    const response = await fetch(
+        `${API_BASE_URL}/automation/`,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        },
+    );
+
+    if (!response.ok) {
+        throw new Error(
+            `Failed to get automations: ${response.status}`,
+        );
+    }
+
+    return response.json();
+}
+
+export async function sendAssistantMessage(
+    message: string,
+): Promise<AssistantMessageResponse> {
+    const token = getToken();
+
+    if (!token) {
+        throw new Error("Not authenticated");
+    }
+
+    const response = await fetch(
+        `${API_BASE_URL}/assistant/message`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+                message,
+            }),
+        },
+    );
+
+    if (!response.ok) {
+        throw new Error(
+            `Assistant request failed: ${response.status}`,
+        );
+    }
+
+    return response.json();
 }
