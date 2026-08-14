@@ -32,7 +32,7 @@ def get_current_user(
 
         user_uuid = payload.get("sub")
 
-        if not user_uuid:
+        if not user_uuid or payload.get("type") != "access":
             raise credentials_exception
 
     except JWTError:

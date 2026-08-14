@@ -9,15 +9,33 @@ password_hash = PasswordHash.recommended()
 
 
 def create_access_token(data: dict):
-    to_encode = data.copy()
-
-    expire = datetime.now(UTC) + timedelta(
-        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+    return create_token(
+        data,
+        expires_in=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
+        token_type="access",
     )
+
+
+def create_refresh_token(data: dict):
+    return create_token(
+        data,
+        expires_in=timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+        token_type="refresh",
+    )
+
+
+def create_token(
+    data: dict,
+    expires_in: timedelta,
+    token_type: str,
+):
+    to_encode = data.copy()
+    expire = datetime.now(UTC) + expires_in
 
     to_encode.update(
         {
             "exp": expire,
+            "type": token_type,
         }
     )
 

@@ -30,3 +30,5 @@ class User(Base):
 
 
     automations = relationship("Automation", back_populates="owner", cascade="all, delete-orphan",)
+
+    assistant_conversations = relationship("AssistantConversation", back_populates="owner", cascade="all, delete-orphan",)

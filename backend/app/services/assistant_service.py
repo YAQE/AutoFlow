@@ -1,39 +1,59 @@
 import json
 
-from app.services.ai_provider_factory import get_ai_provider
+from app.services.ai_provider_factory import (
+    get_ai_provider,
+    get_intent_provider,
+)
 
 
 class AssistantService:
 
     INTENT_PROMPT = """
-You are the intent classification engine of AutoFlow.
+You are AutoFlow's local intent classifier.
 
-Classify the user's message into exactly one of these two intents:
+Classify the CURRENT USER MESSAGE into exactly one intent:
 
-assistant_chat:
-The user wants to learn, ask a question, discuss an idea, get advice,
-improve a prompt, or have a normal conversation.
+assistant_chat
+automation
 
-automation:
-The user wants AutoFlow to perform, schedule, monitor, collect,
-transform, send, notify, or otherwise automate a real-world task.
+assistant_chat means:
+- asking a question
+- learning something
+- discussing an idea
+- asking for advice
+- improving a prompt
+- normal conversation
+- asking how an automation works
+
+automation means:
+- asking AutoFlow to perform a real-world task
+- asking AutoFlow to create an automation
+- asking AutoFlow to monitor, collect, notify, schedule,
+  transform, send, or otherwise automate something
 
 Important:
-- Talking ABOUT automation is assistant_chat.
-- Asking HOW to build an automation is assistant_chat.
-- Asking AutoFlow TO BUILD or PERFORM an automation is automation.
-- If the user explicitly asks to automate a task, classify it as automation.
+
+- Talking ABOUT automation -> assistant_chat
+- Asking HOW to build automation -> assistant_chat
+- Asking AutoFlow TO BUILD or PERFORM automation -> automation
+
+Use recent conversation context only when it helps resolve ambiguity.
 
 Return ONLY valid JSON.
 
-Format:
+Valid responses:
+
 {"intent":"assistant_chat"}
 
 or
 
 {"intent":"automation"}
 
-User message:
+RECENT CONVERSATION:
+
+{history}
+
+CURRENT USER MESSAGE:
 
 {message}
 """
@@ -41,47 +61,106 @@ User message:
     CHAT_PROMPT = """
 You are AutoFlow AI Assistant.
 
-You are a helpful, clear and intelligent assistant.
+You are a personal AI assistant that helps the user:
 
-You can:
-- answer questions
-- teach concepts
+- learn technical and non-technical topics
+- plan study sessions
 - discuss ideas
-- help improve prompts
-- help the user think through problems
-- explain technical topics
+- solve problems
+- improve prompts
+- think through decisions
+- prepare daily work plans
+- discuss automation ideas
 
-You are part of AutoFlow, an AI automation platform.
+You have access to the conversation history.
 
-If the user is discussing an automation idea but has NOT explicitly
-asked you to create or perform it, discuss the idea normally.
+Use it to maintain continuity.
 
-Do not claim that you performed an action unless the system actually
-performed it.
+If the user previously stated a fact and later refers to it,
+use that information naturally.
 
-Answer naturally and concisely.
+Do not invent memories.
 
-USER:
+Do not claim that an action was performed unless the system
+actually performed it.
+
+If the user explicitly wants to create or perform an automation,
+the system handles that separately.
+
+Answer naturally, clearly and concisely.
+
+CONVERSATION HISTORY:
+
+{history}
+
+CURRENT USER MESSAGE:
 
 {message}
 """
 
-    @staticmethod
-    async def classify_intent(message: str) -> str:
-        provider = get_ai_provider()
+    AUTOMATION_CONFIRMATION = (
+        "Bu mesaj bir otomasyon isteği gibi görünüyor. "
+        "Bunu bir otomasyona dönüştürmemi ister misin?"
+    )
 
-        prompt = AssistantService.INTENT_PROMPT.replace(
-            "{message}",
-            message,
+    @staticmethod
+    def _build_history(
+        history: list[dict[str, str]] | None,
+        limit: int = 20,
+    ) -> str:
+        if not history:
+            return "No previous conversation."
+
+        recent_history = history[-limit:]
+
+        return "\n".join(
+            f"{item['role'].upper()}: {item['content']}"
+            for item in recent_history
         )
 
-        raw_response = await provider.generate(prompt)
+    @staticmethod
+    async def classify_intent(
+        message: str,
+        history: list[dict[str, str]] | None = None,
+    ) -> str:
+        """
+        Always uses local Ollama for intent classification.
+        """
+
+        provider = get_intent_provider()
+
+        # Intent detection does not need 20 messages.
+        # A small recent context is enough.
+        history_text = (
+            AssistantService._build_history(
+                history,
+                limit=6,
+            )
+        )
+
+        prompt = (
+            AssistantService.INTENT_PROMPT
+            .replace(
+                "{history}",
+                history_text,
+            )
+            .replace(
+                "{message}",
+                message,
+            )
+        )
+
+        raw_response = await provider.generate(
+            prompt
+        )
 
         try:
-            data = json.loads(raw_response)
+            data = json.loads(
+                raw_response
+            )
         except json.JSONDecodeError as exc:
             raise RuntimeError(
-                "AI provider returned invalid intent JSON"
+                "Local intent provider returned invalid JSON"
             ) from exc
 
         intent = data.get("intent")
@@ -91,7 +170,7 @@ USER:
             "automation",
         }:
             raise RuntimeError(
-                "AI provider returned an invalid intent"
+                "Local intent provider returned an invalid intent"
             )
 
         return intent
@@ -99,34 +178,79 @@ USER:
     @staticmethod
     async def generate_chat_response(
         message: str,
+        history: list[dict[str, str]] | None = None,
+        provider: str | None = None,
+        model: str | None = None,
     ) -> str:
-        provider = get_ai_provider()
+        """
+        Uses the provider/model selected by the user.
+        """
 
-        prompt = AssistantService.CHAT_PROMPT.replace(
-            "{message}",
-            message,
+        ai_provider = get_ai_provider(
+            provider=provider,
+            model=model,
         )
 
-        return await provider.generate(prompt)
+        history_text = (
+            AssistantService._build_history(
+                history,
+                limit=20,
+            )
+        )
+
+        prompt = (
+            AssistantService.CHAT_PROMPT
+            .replace(
+                "{history}",
+                history_text,
+            )
+            .replace(
+                "{message}",
+                message,
+            )
+        )
+
+        return await ai_provider.generate(
+            prompt
+        )
 
     @staticmethod
     async def respond(
         message: str,
+        history: list[dict[str, str]] | None = None,
+        provider: str | None = None,
+        model: str | None = None,
     ) -> tuple[str, str]:
+        """
+        Full assistant pipeline:
 
-        intent = await AssistantService.classify_intent(
-            message,
+        1. Local Ollama determines intent.
+        2. If normal chat:
+           selected provider generates the response.
+        3. If automation:
+           return the automation handoff message.
+        """
+
+        intent = (
+            await AssistantService.classify_intent(
+                message=message,
+                history=history,
+            )
         )
 
         if intent == "assistant_chat":
-            response = await AssistantService.generate_chat_response(
-                message,
+            response = (
+                await AssistantService.generate_chat_response(
+                    message=message,
+                    history=history,
+                    provider=provider,
+                    model=model,
+                )
             )
 
             return intent, response
 
         return (
             intent,
-            "Bu mesaj bir otomasyon isteği gibi görünüyor. "
-            "Bunu bir otomasyona dönüştürmemi ister misin?",
+            AssistantService.AUTOMATION_CONFIRMATION,
         )

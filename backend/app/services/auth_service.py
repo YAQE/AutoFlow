@@ -3,7 +3,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from datetime import datetime, UTC
 from app.core.security import verify_password
-from app.core.security import create_access_token
+from app.core.security import create_access_token, create_refresh_token
 from fastapi import HTTPException
 from app.models.user import User
 from app.schemas.auth_schema import RegisterRequest
@@ -35,6 +35,7 @@ class AuthService:
                 "sub": user.uuid,
             }
         )
+        refresh_token = create_refresh_token({"sub": user.uuid})
 
         user.last_login = datetime.now(UTC)
 
@@ -44,6 +45,7 @@ class AuthService:
         return {
             "access_token": access_token,
             "token_type": "bearer",
+            "refresh_token": refresh_token,
         }
     @staticmethod
     def register(request: RegisterRequest, db: Session):

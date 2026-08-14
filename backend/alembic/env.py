@@ -9,6 +9,8 @@ from app.models.workflow import Workflow
 from app.models.workflow_run import WorkflowRun
 from logging.config import fileConfig
 from app.models.automation import Automation
+from app.models.assistant_conversation import AssistantConversation
+from app.models.assistant_message import AssistantMessage
 
 
 from sqlalchemy import engine_from_config

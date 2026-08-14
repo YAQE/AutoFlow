@@ -31,6 +31,7 @@ router = APIRouter(
 @router.post("/analyze")
 async def analyze_automation(
     request: AutomationRequest,
+    current_user: User = Depends(get_current_user),
 ):
     result = await AutomationService.analyze(
         message=request.message,

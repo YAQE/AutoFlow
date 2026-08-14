@@ -4,15 +4,12 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-from app.models.automation_plan import AutomationPlan
-from app.services.ai_provider_factory import get_ai_provider
-
-
 from app.models.automation import Automation
 from app.models.automation_plan import AutomationPlan
 from app.repositories.automation_repository import (
     AutomationRepository,
 )
+from app.services.ai_provider_factory import get_ai_provider
 
 
 class AutomationService:
@@ -516,10 +513,6 @@ USER'S NEW MESSAGE:
     
         raw_response = await provider.generate(prompt)
     
-        print("\n========== AI RAW RESPONSE ==========")
-        print(raw_response)
-        print("=====================================\n")
-    
         try:
             data = json.loads(raw_response)
     
@@ -538,11 +531,4 @@ USER'S NEW MESSAGE:
                 "AI provider returned an invalid automation plan"
             ) from exc
     
-        try:
-            plan = AutomationPlan.model_validate(data)
-        except Exception as exc:
-            raise RuntimeError(
-                "AI provider returned an invalid automation plan"
-            ) from exc
-
         return plan.model_dump()

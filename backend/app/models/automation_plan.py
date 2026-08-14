@@ -1,15 +1,22 @@
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
 
 class Trigger(BaseModel):
-    type: str
+    type: Literal["schedule", "webhook", "manual"]
     configuration: dict[str, Any] = Field(default_factory=dict)
 
 
 class Action(BaseModel):
-    type: str
+    type: Literal[
+        "web_scrape",
+        "send_email",
+        "send_telegram",
+        "webhook",
+        "transform_data",
+        "filter",
+    ]
     configuration: dict[str, Any] = Field(default_factory=dict)
 
 
