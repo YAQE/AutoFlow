@@ -17,10 +17,12 @@ type User = {
 
 type LoginPageProps = {
     onLogin: (user: User) => void;
+    notice?: string | null;
 };
 
 function LoginPage({
     onLogin,
+    notice,
 }: LoginPageProps) {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
@@ -96,6 +98,11 @@ function LoginPage({
                 <form
                     onSubmit={handleSubmit}
                 >
+                    {notice && (
+                        <div className="session-notice">
+                            {notice}
+                        </div>
+                    )}
                     <div className="form-group">
                         <label
                             htmlFor="username"

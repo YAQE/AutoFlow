@@ -6,7 +6,10 @@ import {
 
 import { Link } from "react-router-dom";
 
-import { sendAssistantMessage } from "../api/client";
+import {
+    getAssistantConversation,
+    sendAssistantMessage,
+} from "../api/client";
 
 type ChatMessage = {
     id: number;
@@ -18,6 +21,8 @@ type ChatMessage = {
 function AssistantPage() {
     const [message, setMessage] = useState("");
     const [loading, setLoading] = useState(false);
+    const [conversationLoading, setConversationLoading] =
+        useState(true);
 
     const chatEndRef =
         useRef<HTMLDivElement | null>(null);
@@ -29,25 +34,82 @@ function AssistantPage() {
         useRef<number | null>(null);
 
     const [messages, setMessages] =
-        useState<ChatMessage[]>([
-            {
-                id: 1,
-                role: "assistant",
-                content:
-                    "Hi. I'm your AutoFlow assistant. Ask me anything, discuss an idea, or describe something you'd like to automate.",
-            },
-        ]);
+        useState<ChatMessage[]>([]);
 
+    /*
+     * Load conversation history once when the
+     * assistant page is opened.
+     */
     useEffect(() => {
+        async function loadConversation() {
+            try {
+                const conversation =
+                    await getAssistantConversation();
+
+                if (conversation.messages.length > 0) {
+                    setMessages(
+                        conversation.messages.map(
+                            (item) => ({
+                                id: item.id,
+                                role: item.role,
+                                content:
+                                    item.content,
+                            }),
+                        ),
+                    );
+                } else {
+                    setMessages([
+                        {
+                            id: 1,
+                            role: "assistant",
+                            content:
+                                "Merhaba. Ben AutoFlow Assistant. Bir şey öğrenmek, fikir tartışmak veya yapmak istediğin bir işi otomasyona dönüştürmek için benimle konuşabilirsin.",
+                        },
+                    ]);
+                }
+            } catch {
+                setMessages([
+                    {
+                        id: 1,
+                        role: "assistant",
+                        content:
+                            "Merhaba. Ben AutoFlow Assistant. Bir şey öğrenmek, fikir tartışmak veya yapmak istediğin bir işi otomasyona dönüştürmek için benimle konuşabilirsin.",
+                    },
+                ]);
+            } finally {
+                setConversationLoading(false);
+            }
+        }
+
+        loadConversation();
+    }, []);
+
+    /*
+     * Scroll to the latest message.
+     */
+    useEffect(() => {
+        if (conversationLoading) {
+            return;
+        }
+
         chatEndRef.current?.scrollIntoView({
             behavior: "smooth",
             block: "end",
         });
-    }, [messages, loading]);
+    }, [
+        messages,
+        loading,
+        conversationLoading,
+    ]);
 
+    /*
+     * Cleanup typing timer.
+     */
     useEffect(() => {
         return () => {
-            if (typingTimerRef.current !== null) {
+            if (
+                typingTimerRef.current !== null
+            ) {
                 window.clearTimeout(
                     typingTimerRef.current,
                 );
@@ -55,8 +117,12 @@ function AssistantPage() {
         };
     }, []);
 
+    /*
+     * Resize textarea automatically.
+     */
     function resizeTextarea() {
-        const textarea = textareaRef.current;
+        const textarea =
+            textareaRef.current;
 
         if (!textarea) {
             return;
@@ -66,16 +132,23 @@ function AssistantPage() {
 
         const maxHeight = 180;
 
-        textarea.style.height = `${Math.min(
-            textarea.scrollHeight,
-            maxHeight,
-        )}px`;
+        textarea.style.height =
+            `${Math.min(
+                textarea.scrollHeight,
+                maxHeight,
+            )}px`;
     }
 
     useEffect(() => {
         resizeTextarea();
     }, [message]);
 
+    /*
+     * Simulate streaming for the current UI.
+     *
+     * Later this can be replaced with real
+     * model streaming without changing the UI.
+     */
     function addAssistantMessageAnimated(
         fullText: string,
     ) {
@@ -94,52 +167,58 @@ function AssistantPage() {
         let currentIndex = 0;
 
         function typeNextChunk() {
-            if (currentIndex >= fullText.length) {
+            if (
+                currentIndex >=
+                fullText.length
+            ) {
                 setMessages((current) =>
                     current.map((item) =>
-                        item.id === messageId
+                        item.id ===
+                        messageId
                             ? {
                                   ...item,
-                                  isTyping: false,
+                                  isTyping:
+                                      false,
                               }
                             : item,
                     ),
                 );
-            
-                typingTimerRef.current = null;
+
+                typingTimerRef.current =
+                    null;
+
                 return;
             }
 
-            /*
-             * Bir kerede 1-3 karakter oluşturarak
-             * doğal bir yazım hissi veriyoruz.
-             */
             const chunkSize =
-                Math.floor(Math.random() * 3) + 1;
+                Math.floor(
+                    Math.random() * 3,
+                ) + 1;
 
             currentIndex = Math.min(
-                currentIndex + chunkSize,
+                currentIndex +
+                    chunkSize,
                 fullText.length,
             );
 
             const currentText =
-                fullText.slice(0, currentIndex);
+                fullText.slice(
+                    0,
+                    currentIndex,
+                );
 
             setMessages((current) =>
                 current.map((item) =>
                     item.id === messageId
                         ? {
                               ...item,
-                              content: currentText,
+                              content:
+                                  currentText,
                           }
                         : item,
                 ),
             );
 
-            /*
-             * Her karakter arasında tamamen sabit
-             * olmayan küçük bir gecikme.
-             */
             const delay =
                 Math.floor(
                     Math.random() * 18,
@@ -163,7 +242,11 @@ function AssistantPage() {
         const trimmedMessage =
             message.trim();
 
-        if (!trimmedMessage || loading) {
+        if (
+            !trimmedMessage ||
+            loading ||
+            conversationLoading
+        ) {
             return;
         }
 
@@ -187,16 +270,8 @@ function AssistantPage() {
                     trimmedMessage,
                 );
 
-            /*
-             * Önce "Thinking..." durumunu
-             * kapatıyoruz.
-             */
             setLoading(false);
 
-            /*
-             * Sonra AI cevabını karakter karakter
-             * oluşturmaya başlıyoruz.
-             */
             addAssistantMessageAnimated(
                 response.message,
             );
@@ -206,7 +281,7 @@ function AssistantPage() {
             const errorMessage =
                 error instanceof Error
                     ? error.message
-                    : "Something went wrong.";
+                    : "Bir hata oluştu.";
 
             addAssistantMessageAnimated(
                 errorMessage,
@@ -236,11 +311,13 @@ function AssistantPage() {
                 <aside className="assistant-sidebar">
 
                     <div className="assistant-brand">
+
                         <div className="assistant-brand-mark">
                             A
                         </div>
 
                         <div>
+
                             <strong>
                                 AutoFlow
                             </strong>
@@ -248,8 +325,11 @@ function AssistantPage() {
                             <span>
                                 AI workspace
                             </span>
+
                         </div>
+
                     </div>
+
 
                     <nav className="assistant-navigation">
 
@@ -264,6 +344,7 @@ function AssistantPage() {
                             AI Assistant
                         </Link>
 
+
                         <Link
                             to="/automations"
                             className="assistant-nav-item"
@@ -275,7 +356,20 @@ function AssistantPage() {
                             Automations
                         </Link>
 
+
+                        <Link
+                            to="/dashboard"
+                            className="assistant-nav-item"
+                        >
+                            <span className="nav-icon">
+                                ▦
+                            </span>
+
+                            Dashboard
+                        </Link>
+
                     </nav>
+
 
                     <div className="assistant-sidebar-bottom">
 
@@ -286,6 +380,7 @@ function AssistantPage() {
                             </div>
 
                             <div>
+
                                 <strong>
                                     Workspace
                                 </strong>
@@ -293,6 +388,7 @@ function AssistantPage() {
                                 <span>
                                     Personal
                                 </span>
+
                             </div>
 
                         </div>
@@ -311,8 +407,11 @@ function AssistantPage() {
                         <div>
 
                             <div className="assistant-status">
+
                                 <span className="status-dot" />
+
                                 AI Assistant
+
                             </div>
 
                             <h1>
@@ -321,18 +420,21 @@ function AssistantPage() {
 
                         </div>
 
+
                         <div className="assistant-model">
 
                             <span className="model-dot" />
 
                             <div>
+
                                 <span>
-                                    Ollama
+                                    AI Provider
                                 </span>
 
                                 <small>
-                                    qwen3:4b
+                                    Connected
                                 </small>
+
                             </div>
 
                         </div>
@@ -346,48 +448,80 @@ function AssistantPage() {
 
                         <div className="chat-scroll">
 
-                            {messages.map(
-                                (chatMessage) => (
+                            {conversationLoading ? (
 
-                                    <div
-                                        key={
-                                            chatMessage.id
-                                        }
-                                        className={`chat-row ${chatMessage.role}`}
-                                    >
+                                <div className="chat-row assistant">
 
-                                        {chatMessage.role ===
-                                            "assistant" && (
-                                            <div className="chat-avatar assistant-avatar">
-                                                A
-                                            </div>
-                                        )}
+                                    <div className="chat-avatar assistant-avatar">
+                                        A
+                                    </div>
 
-                                        <div
-                                            className={`chat-message ${chatMessage.role}`}
-                                        >
-                                            {
-                                                chatMessage.content
-                                            }
+                                    <div className="chat-message assistant typing-message">
 
-                                            {chatMessage.role === "assistant" &&
-                                                chatMessage.isTyping && (
-                                                    <span className="typing-cursor">
-                                                        ▌
-                                                    </span>
-                                                )}
-                                        </div>
-
-                                        {chatMessage.role ===
-                                            "user" && (
-                                            <div className="chat-avatar user-message-avatar">
-                                                Y
-                                            </div>
-                                        )}
+                                        <span />
+                                        <span />
+                                        <span />
 
                                     </div>
-                                ),
+
+                                </div>
+
+                            ) : (
+
+                                messages.map(
+                                    (
+                                        chatMessage,
+                                    ) => (
+
+                                        <div
+                                            key={
+                                                chatMessage.id
+                                            }
+                                            className={`chat-row ${chatMessage.role}`}
+                                        >
+
+                                            {chatMessage.role ===
+                                                "assistant" && (
+                                                <div className="chat-avatar assistant-avatar">
+                                                    A
+                                                </div>
+                                            )}
+
+
+                                            <div
+                                                className={`chat-message ${chatMessage.role}`}
+                                            >
+
+                                                {
+                                                    chatMessage.content
+                                                }
+
+
+                                                {chatMessage.role ===
+                                                    "assistant" &&
+                                                    chatMessage.isTyping && (
+                                                        <span className="typing-cursor">
+                                                            ▌
+                                                        </span>
+                                                    )}
+
+                                            </div>
+
+
+                                            {chatMessage.role ===
+                                                "user" && (
+                                                <div className="chat-avatar user-message-avatar">
+                                                    Y
+                                                </div>
+                                            )}
+
+                                        </div>
+
+                                    ),
+                                )
+
                             )}
+
 
                             {loading && (
                                 <div className="chat-row assistant">
@@ -397,13 +531,16 @@ function AssistantPage() {
                                     </div>
 
                                     <div className="chat-message assistant typing-message">
+
                                         <span />
                                         <span />
                                         <span />
+
                                     </div>
 
                                 </div>
                             )}
+
 
                             <div ref={chatEndRef} />
 
@@ -422,11 +559,17 @@ function AssistantPage() {
                             >
 
                                 <textarea
-                                    ref={textareaRef}
+                                    ref={
+                                        textareaRef
+                                    }
                                     value={message}
-                                    onChange={(event) =>
+                                    onChange={(
+                                        event,
+                                    ) =>
                                         setMessage(
-                                            event.target.value,
+                                            event
+                                                .target
+                                                .value,
                                         )
                                     }
                                     onKeyDown={
@@ -434,13 +577,18 @@ function AssistantPage() {
                                     }
                                     placeholder="Message AutoFlow..."
                                     rows={1}
-                                    disabled={loading}
+                                    disabled={
+                                        loading ||
+                                        conversationLoading
+                                    }
                                 />
+
 
                                 <button
                                     type="submit"
                                     disabled={
                                         loading ||
+                                        conversationLoading ||
                                         !message.trim()
                                     }
                                     aria-label="Send message"
@@ -452,9 +600,11 @@ function AssistantPage() {
 
                             </form>
 
+
                             <p>
-                                Enter to send · Shift +
-                                Enter for a new line
+                                Enter to send ·
+                                Shift + Enter for a
+                                new line
                             </p>
 
                         </div>
@@ -482,15 +632,16 @@ function AssistantPage() {
 
                         </div>
 
+
                         <button
                             className="config-settings-button"
                             type="button"
-                            aria-label="Settings"
                         >
                             ⚙
                         </button>
 
                     </div>
+
 
                     <div className="config-section">
 
@@ -503,7 +654,7 @@ function AssistantPage() {
                             type="button"
                         >
                             <span>
-                                Ollama
+                                Active provider
                             </span>
 
                             <span>
@@ -512,6 +663,7 @@ function AssistantPage() {
                         </button>
 
                     </div>
+
 
                     <div className="config-section">
 
@@ -524,7 +676,7 @@ function AssistantPage() {
                             type="button"
                         >
                             <span>
-                                qwen3:4b
+                                Current model
                             </span>
 
                             <span>
@@ -534,7 +686,9 @@ function AssistantPage() {
 
                     </div>
 
+
                     <div className="config-divider" />
+
 
                     <div className="config-section instructions">
 
@@ -550,6 +704,7 @@ function AssistantPage() {
 
                         </div>
 
+
                         <textarea
                             defaultValue={`You are a helpful AI assistant inside AutoFlow.
 
@@ -561,6 +716,7 @@ idea into a clear automation.`}
 
                     </div>
 
+
                     <div className="config-info">
 
                         <div className="info-icon">
@@ -568,12 +724,13 @@ idea into a clear automation.`}
                         </div>
 
                         <p>
-                            These instructions define
-                            how the assistant behaves
-                            during conversations.
+                            These instructions will
+                            eventually become persistent
+                            assistant configuration.
                         </p>
 
                     </div>
+
 
                     <button
                         className="save-config-button"

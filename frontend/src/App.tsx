@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-
 import {
     BrowserRouter,
     Navigate,
@@ -9,10 +8,11 @@ import {
 
 import LoginPage from "./pages/LoginPage";
 import Dashboard from "./pages/Dashboard";
-import AutomationsPage from "./pages/AutomationsPage";
 import AssistantPage from "./pages/AssistantPage";
+import AutomationsPage from "./pages/AutomationsPage";
+import AutomationDetailPage from "./pages/AutomationDetailPage";
 
-import { getCurrentUser } from "./api/client";
+import { getCurrentUser, logout } from "./api/client";
 import { getToken, removeToken } from "./auth/token";
 
 type User = {
@@ -26,6 +26,7 @@ type User = {
 function App() {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    const [sessionNotice, setSessionNotice] = useState<string | null>(null);
 
     useEffect(() => {
         async function checkAuth() {
@@ -38,7 +39,6 @@ function App() {
 
             try {
                 const currentUser = await getCurrentUser();
-
                 setUser(currentUser);
             } catch {
                 removeToken();
@@ -51,9 +51,20 @@ function App() {
         checkAuth();
     }, []);
 
-    function handleLogout() {
-        removeToken();
+    useEffect(() => {
+        const handleSessionExpired = () => {
+            removeToken();
+            setUser(null);
+            setSessionNotice("Oturumun sona erdi. Lütfen tekrar giriş yap.");
+        };
+        window.addEventListener("autoflow:session-expired", handleSessionExpired);
+        return () => window.removeEventListener("autoflow:session-expired", handleSessionExpired);
+    }, []);
+
+    async function handleLogout() {
+        await logout();
         setUser(null);
+        setSessionNotice(null);
     }
 
     if (loading) {
@@ -66,61 +77,89 @@ function App() {
         );
     }
 
-    if (!user) {
-        return (
-            <LoginPage
-                onLogin={setUser}
-            />
-        );
-    }
-
     return (
         <BrowserRouter>
             <Routes>
 
-                {/* Ana sayfa */}
-                <Route
-                    path="/"
-                    element={
-                        <Dashboard
-                            onLogout={handleLogout}
+                {/* Public */}
+                {!user ? (
+                    <>
+                        <Route
+                            path="/login"
+                            element={
+                                <LoginPage
+                                    onLogin={setUser}
+                                    notice={sessionNotice}
+                                />
+                            }
                         />
-                    }
-                />
 
-                {/* AI Assistant */}
-                <Route
-                    path="/assistant"
-                    element={
-                        <AssistantPage />
-                    }
-                />
-
-                {/* Automations */}
-                <Route
-                    path="/automations"
-                    element={
-                        <AutomationsPage
-                            onOpenAutomation={(automationId) => {
-                                console.log(
-                                    "Open automation:",
-                                    automationId,
-                                );
-                            }}
+                        <Route
+                            path="*"
+                            element={
+                                <Navigate
+                                    to="/login"
+                                    replace
+                                />
+                            }
                         />
-                    }
-                />
-
-                {/* Bilinmeyen route */}
-                <Route
-                    path="*"
-                    element={
-                        <Navigate
-                            to="/assistant"
-                            replace
+                    </>
+                ) : (
+                    <>
+                        {/* AI Assistant */}
+                        <Route
+                            path="/assistant"
+                            element={
+                                <AssistantPage />
+                            }
                         />
-                    }
-                />
+
+                        {/* Automations */}
+                        <Route
+                            path="/automations"
+                            element={<AutomationsPage />}
+                        />
+
+                        <Route
+                            path="/automations/:automationId"
+                            element={<AutomationDetailPage />}
+                        />
+
+                        {/* Temporary dashboard / overview */}
+                        <Route
+                            path="/dashboard"
+                            element={
+                                <Dashboard
+                                    onLogout={
+                                        handleLogout
+                                    }
+                                />
+                            }
+                        />
+
+                        {/* Root */}
+                        <Route
+                            path="/"
+                            element={
+                                <Navigate
+                                    to="/assistant"
+                                    replace
+                                />
+                            }
+                        />
+
+                        {/* Unknown */}
+                        <Route
+                            path="*"
+                            element={
+                                <Navigate
+                                    to="/assistant"
+                                    replace
+                                />
+                            }
+                        />
+                    </>
+                )}
 
             </Routes>
         </BrowserRouter>

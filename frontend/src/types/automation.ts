@@ -19,3 +19,10 @@ export type Automation = {
     created_at: string;
     updated_at: string;
 };
+
+export type AutomationPlan = {
+    goal: string;
+    trigger: AutomationTrigger;
+    actions: AutomationAction[];
+    missing_information: string[];
+};

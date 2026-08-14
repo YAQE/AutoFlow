@@ -271,9 +271,11 @@ textarea {
 ========================================================= */
 
 .dashboard-page {
+    height: 100vh;
     min-height: 100vh;
 
     overflow-y: auto;
+    overflow-x: hidden;
 
     padding: 28px;
 
@@ -286,6 +288,17 @@ textarea {
         #070b12;
 
     color: #e5e7eb;
+}
+
+.session-notice {
+    margin-bottom: 17px;
+    padding: 10px 12px;
+    border: 1px solid #365a8f;
+    border-radius: 9px;
+    background: #10213d;
+    color: #bfdbfe;
+    font-size: 12px;
+    line-height: 1.5;
 }
 
 .dashboard-container {
@@ -1583,6 +1596,131 @@ textarea {
     color: #60a5fa;
 
     animation: cursorBlink 0.8s infinite;
+}
+
+.plan-confirmation {
+    width: min(720px, 100%);
+    margin: 0 auto 24px;
+    padding: 18px;
+    border: 1px solid #24539b;
+    border-radius: 14px;
+    background: #0d1a2e;
+}
+
+.plan-confirmation span,
+.plan-confirmation strong {
+    display: block;
+}
+
+.plan-confirmation span {
+    color: #93c5fd;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.plan-confirmation strong {
+    margin: 6px 0 14px;
+    color: #f8fafc;
+}
+
+.back-link {
+    display: inline-block;
+    margin: 12px 0 22px;
+    color: #93c5fd;
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.detail-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.detail-grid,
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 16px;
+    margin-bottom: 30px;
+}
+
+.detail-card,
+.metric-card,
+.runs-placeholder {
+    padding: 20px;
+    border: 1px solid #1d2939;
+    border-radius: 14px;
+    background: #0b111b;
+}
+
+.detail-card h2,
+.detail-card p,
+.metric-card strong,
+.metric-card span {
+    margin: 0;
+}
+
+.detail-card h2 {
+    margin: 7px 0;
+    color: #f8fafc;
+    font-size: 18px;
+    text-transform: capitalize;
+}
+
+.detail-card p,
+.workflow-step p,
+.metric-card span {
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+.metric-card strong {
+    display: block;
+    margin-top: 10px;
+    color: #f8fafc;
+    font-size: 30px;
+}
+
+.workflow-steps {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+.workflow-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 13px;
+    padding: 15px;
+    border: 1px solid #1d2939;
+    border-radius: 12px;
+    background: #0b111b;
+}
+
+.workflow-step > span {
+    display: grid;
+    place-items: center;
+    width: 25px;
+    height: 25px;
+    border-radius: 8px;
+    background: #172554;
+    color: #bfdbfe;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.workflow-step strong {
+    display: block;
+    color: #e5e7eb;
+    text-transform: capitalize;
+}
+
+.workflow-step p {
+    margin: 5px 0 0;
 }
 
 @keyframes cursorBlink {

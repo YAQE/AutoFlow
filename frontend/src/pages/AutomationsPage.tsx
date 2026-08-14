@@ -1,15 +1,11 @@
 import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 import { getAutomations } from "../api/client";
 import type { Automation } from "../types/automation";
 
-type AutomationsPageProps = {
-    onOpenAutomation: (automationId: number) => void;
-};
-
-function AutomationsPage({
-    onOpenAutomation,
-}: AutomationsPageProps) {
+function AutomationsPage() {
+    const navigate = useNavigate();
     const [automations, setAutomations] = useState<Automation[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -49,6 +45,7 @@ function AutomationsPage({
     return (
         <main className="dashboard-page">
             <div className="dashboard-container">
+                <nav className="app-nav"><div className="app-brand"><div className="brand-mark">A</div><span>AutoFlow</span></div><div className="app-nav-links"><Link to="/assistant" className="nav-link">AI Assistant</Link><Link to="/automations" className="nav-link active">Automations</Link><Link to="/dashboard" className="nav-link">Dashboard</Link></div></nav>
                 <header className="dashboard-header">
                     <div>
                         <h1>Automations</h1>
@@ -56,7 +53,7 @@ function AutomationsPage({
                         <p>
                             Let AutoFlow handle repetitive work for you.
                         </p>
-                    </div>
+                    </div><Link to="/assistant" className="primary-button">+ Create automation</Link>
                 </header>
 
                 {error && (
@@ -80,9 +77,7 @@ function AutomationsPage({
                             <button
                                 className="workflow-card"
                                 key={automation.id}
-                                onClick={() =>
-                                    onOpenAutomation(automation.id)
-                                }
+                                onClick={() => navigate(`/automations/${automation.id}`)}
                             >
                                 <div className="workflow-card-header">
                                     <h3>
